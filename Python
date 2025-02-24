@@ -1,0 +1,53 @@
+import os
+import json
+import pandas as pd
+from datetime import datetime
+
+class HRComplianceAnalyzer:
+    def __init__(self, policy_folder):
+        self.policy_folder = policy_folder
+        self.violations = []
+
+    def load_policies(self):
+        policies = {}
+        for file in os.listdir(self.policy_folder):
+            if file.endswith(".txt"):
+                with open(os.path.join(self.policy_folder, file), "r", encoding="utf-8") as f:
+                    policies[file] = f.read()
+        return policies
+
+    def analyze_policies(self, policies):
+        compliance_keywords = {
+            "data_security": ["encryption", "access control", "GDPR", "HIPAA"],
+            "anti_harassment": ["zero tolerance", "reporting mechanism", "retaliation"],
+            "workplace_safety": ["OSHA", "emergency procedures", "safety training"]
+        }
+        
+        for filename, content in policies.items():
+            for category, keywords in compliance_keywords.items():
+                missing_keywords = [kw for kw in keywords if kw not in content]
+                if missing_keywords:
+                    self.violations.append({
+                        "policy": filename,
+                        "category": category,
+                        "missing_keywords": missing_keywords,
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+    
+    def generate_report(self, output_file="compliance_report.json"):
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(self.violations, f, indent=4)
+        print(f"Compliance report generated: {output_file}")
+    
+    def run_analysis(self):
+        print("Loading HR policies...")
+        policies = self.load_policies()
+        print("Analyzing policies for compliance gaps...")
+        self.analyze_policies(policies)
+        print("Generating compliance report...")
+        self.generate_report()
+        print("Analysis complete!")
+
+if __name__ == "__main__":
+    analyzer = HRComplianceAnalyzer(policy_folder="./policies")
+    analyzer.run_analysis()
